@@ -1,0 +1,156 @@
+---
+title: "Clean Polygon data"
+author: "Anna Talucci"
+date: "3/09/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+
+Using part2-gee-vectors-SingleEco data file, we remove holes, convert from multipoly to polygon, apply negative buffer, and combine into single shapefile.
+
+In GEE, vectors were run within  hotspot polygons across 3 ROI
+
+1. Union is use to merge overlaping polygons 
+  + For example, where a fire spans the imagery boundaries producing multiple polygons, these are merged into a single polygon.
+2. Cast to Polygon
+  + This convers from a multipolygon to individual Polygons
+3. Remove Holes
+  + This removes any holes created in polgyons during the GEE vectorize process, or when mergeing polygons
+  + It is important to remove as holes can cause issues during geoprocesses.
+4. **Vectors have too many edges to use in GEE after processing - Need to integrate a smoothing function.**
+
+
+
+# Clear workspace
+
+```{r}
+rm(list=ls()) 
+```
+
+# Packages
+
+```{r include=FALSE}
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(dplyr)
+library(tidyr)
+library(spatialEco)
+library(ggplot2)
+library(nngeo)
+library(rmapshaper)
+library(units)
+library(smoothr)
+```
+
+# Projections
+
+
+Equal Area projection for russia need for buffering hotspot data
+https://gis.stackexchange.com/questions/264093/projection-for-russia-map
+
++proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
+
+```{r}
+ea_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
+```
+
+# Read in shapefile
+```{r}
+E_EPoly2_1 = readOGR("../data/Part2-Vectors-HarmEA/E_EPoly2_1_ee_HarmEaFires_2020.shp", "E_EPoly2_1_ee_HarmEaFires_2020") 
+NEPoly1 = readOGR("../data/Part2-Vectors-HarmEA/NEPoly1_ee_HarmEaFires_2020.shp", "NEPoly1_ee_HarmEaFires_2020") 
+W_EPoly2_2 = readOGR("../data/Part2-Vectors-HarmEA/W_EPoly2_2_ee_HarmEaFires_2020.shp", "W_EPoly2_2_ee_HarmEaFires_2020") 
+
+```
+
+
+
+# Reproject in Equal area
+
+```{r}
+E_EPoly2_1_ee = spTransform(E_EPoly2_1, CRS(ea_russia))
+NEPoly1_ee = spTransform(NEPoly1, CRS(ea_russia))
+W_EPoly2_2_ee = spTransform(W_EPoly2_2, CRS(ea_russia))
+```
+
+# Buffer 
+Buffer by 1000m (1km). Originally  a buffer was applied in GEE, but to maintain equal area projection we perform the buffer here at the begining to combine adjacent polygons.  
+```{r}
+E_EPoly2_1_buff = gBuffer(E_EPoly2_1_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+```
+
+```{r}
+NEPoly1_buff = gBuffer(NEPoly1_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+```
+
+```{r}
+W_EPoly2_2_buff = gBuffer(W_EPoly2_2_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
+```
+
+
+
+# Remove holes inside polygons
+
+```{r}
+E_EPoly2_1_buff_nh = remove.holes(E_EPoly2_1_buff)
+```
+
+```{r}
+NEPoly1_buff_nh = remove.holes(NEPoly1_buff)
+```
+
+```{r}
+W_EPoly2_2_buff_nh = remove.holes(W_EPoly2_2_buff)
+```
+
+
+# Combine into one shapefile
+
+```{r}
+all_shp = rbind(E_EPoly2_1_buff_nh, NEPoly1_buff_nh, W_EPoly2_2_buff_nh)
+```
+
+```{r}
+all_shp
+```
+```{r eval=FALSE, include=FALSE}
+plot(all_shp)
+```
+
+# Apply negative buffer
+```{r eval=FALSE, include=FALSE}
+all_shp_nbuf = gBuffer(all_shp, width = -1000, capStyle="ROUND", joinStyle="ROUND")
+```
+
+# Convert from sp to sf
+```{r}
+all_shp_sf = st_as_sf(all_shp)
+```
+
+# Union overlapping  Polygons
+```{r}
+all_shp_un = sf::st_union(all_shp_sf)
+```
+
+# Covert from Multipolygon to Polygon
+```{r}
+all_shp_cast = st_cast(all_shp_un,"POLYGON")
+```
+
+
+
+
+# write Shapefile
+```{r}
+st_write(all_shp_cast, "../outputs/2.1-GEE-clean-shapefiles-EqualArea/combine1_equalarea_2020.shp", driver="ESRI Shapefile") 
+```
+
+

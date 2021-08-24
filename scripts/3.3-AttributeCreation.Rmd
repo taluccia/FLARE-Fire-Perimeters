@@ -1,0 +1,368 @@
+---
+title: "GEE Vector Ecozone Attribute Creation"
+author: "Anna Talucci"
+date: "3/11/2021"
+output: html_document
+---
+
+
+# Clear workspace
+
+```{r}
+rm(list=ls()) 
+```
+
+# Overview
+
+Here we  add attributes, clip to ecozone extent, add ecozone attributes, designate as arctic or sub arctic, and add attributes from hotspot data (e.g., fire start).
+
+
+
+# Packages
+
+```{r include=FALSE}
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(dplyr)
+library(tidyr)
+library(spatialEco)
+library(ggplot2)
+library(lubridate)
+library(forcats)
+```
+
+# Projections
+
+Equal Area projection for russia need for buffering hotspot data
+https://gis.stackexchange.com/questions/264093/projection-for-russia-map
+
++proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
+
+```{r}
+ea_ru = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
+```
+
+
+# Data
+
+## Fire perimeters
+```{r}
+fires = st_read("../data/2.2-GEE-clean-shapefiles-EqualArea/nbuf_equalarea_2020.shp", "nbuf_equalarea_2020") 
+```
+
+
+
+## Hotspots
+```{r}
+hotspots = st_read("../data/M6-march-october/M6_mar-oct_2020.shp", "M6_mar-oct_2020") 
+```
+
+## Ecozones Polygon
+```{r}
+ecozones = st_read("../data/ecozones/ne_siberia_ecozones9_ee.shp", "ne_siberia_ecozones9_ee") 
+```
+
+## Arctic Polygon
+Cropped ecozones to arctic circle for arctic designation. 
+
+```{r}
+eco_arctic = st_read("../data/bbox/ecozone_arctic_crop_ee.shp", "ecozone_arctic_crop_ee") 
+```
+
+## Permafrost
+```{r}
+permafrost = st_read("../data/permafrost/permaice.shp", "permaice") 
+```
+
+## Yedoma
+```{r}
+yedoma1 = st_read("../data/IRYP_v1_shapefiles/QG1000k_yedoma_russia.shp", "QG1000k_yedoma_russia") 
+yedoma2 = st_read("../data/IRYP_v1_shapefiles/QG2500k_yedoma_russia.shp", "QG2500k_yedoma_russia") 
+yedoma3 = st_read("../data/IRYP_v1_shapefiles/SG500k_yedoma_russia.shp", "SG500k_yedoma_russia") 
+```
+
+```{r}
+head(yedoma1)
+head(yedoma2)
+head(yedoma3)
+```
+
+
+```{r}
+yedoma = dplyr::bind_rows(yedoma1, yedoma2, yedoma3) %>% mutate(yedoma="yes")
+
+```
+
+# Projection---Convert to Equal Area
+
+```{r}
+fires_ea = st_transform(fires, ea_ru)
+hotspots_ea = st_transform(hotspots, ea_ru)
+ecozones_ea = st_transform(ecozones, ea_ru)
+eco_arctic_ea = st_transform(eco_arctic, ea_ru)
+perma_ea = st_transform(permafrost, ea_ru)
+yedoma_ea = st_transform(yedoma, ea_ru)
+```
+
+
+# Create attributes
+- ID based on row number
+- area in meters squared, area_m
+- area in Hectares, area_ha
+- Year of the burn, fire_yr
+
+- Ecozone
+- Arctic/subarctic
+
+## Data1---Area Burned Attributes
+```{r}
+data1 = fires_ea %>%
+  dplyr::mutate(ID_obj = row_number()) %>% 
+  dplyr::mutate(burned_area_m = as.numeric(round(st_area(fires_ea),1))) %>% 
+  dplyr::mutate(burned_area_ha = as.numeric(round(burned_area_m*0.0001, 1))) %>% 
+  dplyr::mutate(fire_yr = 2020) 
+```
+
+
+```{r}
+data1
+```
+
+### Plot
+```{r eval=FALSE, include=FALSE}
+plot(st_geometry(ecozones_ea), col = sf.colors(12, categorical = TRUE), border = 'grey', 
+     axes = TRUE)
+plot(st_geometry(st_centroid(data1)), pch = 3, col = 'red', add = TRUE)
+```
+
+## Ecozone attributes
+
+We use `st_join` to add the attributes of the ecozone for each fire. Fires are not restricted to within individual ecozone boundaries. In order to avoid a duplicate entry for a fire that spans two ecozones, we add the argument `largest=TRUE`, which assigns the ecozone that contrains the majority of the fire. 
+
+```{r}
+head(ecozones_ea)
+```
+
+### Rename columns for  ecozones
+Note about  attributes
+1. AREA - area for individual polygons
+2. area_km^2 - total area for each ecoregion ( 1 km^ is 100 ha)
+```{r}
+ren_ecozones_ea = ecozones_ea %>% 
+  rename(c("eco_objectID" = "OBJECTID", "eco_area" = "AREA" , "eco_realm" = "REALM", "eco_biome" = "BIOME")) %>%
+  dplyr::mutate(eco_area_ha = as.numeric(round(area_km2*100, 1)))
+```
+
+```{r}
+head(ren_ecozones_ea)
+```
+
+### Data2---Join ecozone attributes with fire perimeters
+st_make_valid(poly)
+```{r}
+data2 = st_join(st_make_valid(data1), ren_ecozones_ea, largest=TRUE) %>% dplyr::select(rmpshpr:eco_area, ECO_NAME:ECO_SYM, area_km2:geometry) %>% 
+  drop_na(eco_code)
+```
+%>% dplyr::select(rmpshpr:eco_area, ECO_NAME:ECO_SYM, area_km2:geometry) %>% 
+  drop_na(eco_code)
+```{r}
+head(data2)
+```
+
+##  Plot
+```{r eval=FALSE, include=FALSE}
+plot(st_geometry(ecozones_ea), border = 'grey', 
+     axes = TRUE)
+plot(st_geometry(st_centroid(data2)), pch = 3, col = 'red', add = TRUE)
+```
+
+## Data3---Arctic/Subarctic designation
+```{r}
+data3 = st_join(data2, eco_arctic_ea, largest=TRUE) 
+```
+
+```{r}
+str(data3)
+```
+
+### Convert NA to subarctic
+For location, arctic and subarctic, we need to redefine the NA values as subartic
+```{r}
+levels(data3$location)
+```
+```{r}
+data4 = data3 %>% mutate_at(vars(location), funs(factor(data3$location, exclude = NULL, levels = c("arctic", NA), labels = c("arctic", "subarctic")))) 
+
+data4
+```
+```{r eval=FALSE, include=FALSE}
+data3$location <- factor(data3$location, exclude = NULL, 
+               levels = c("arctic", NA), 
+               labels = c("arctic", "subarctic"))
+data3
+```
+
+```{r eval=FALSE, include=FALSE}
+plot(st_geometry(ecozones_ea), border = 'grey', 
+     axes = TRUE)
+plot(st_geometry(st_centroid(data3)), pch = 3, col = 'red', add = TRUE)
+```
+
+
+## Hotspot attributes
+```{r}
+str(hotspots_ea)
+```
+
+```{r}
+hotspots_ea %>% mutate(julian_date = yday(ACQ_DATE)) %>% 
+  separate(ACQ_DATE, c("acq_year","acq_month", "acq_day"), sep = "-", remove=FALSE) 
+```
+
+
+### Function to summarize hotspot attributes
+```{r}
+sum_pt_poly = function(x){
+  x %>% mutate(julian_date = yday(ACQ_DATE)) %>%
+  separate(ACQ_DATE, c("acq_year","acq_month", "acq_day"), sep = "-", remove=FALSE) %>% group_by(ID_obj) %>% 
+  summarize(min_julian_date = min(julian_date),
+            max_julian_date = max(julian_date),
+            mean_julian_date = mean(julian_date),
+            median_julian_date = median(julian_date),
+            min_confidence = min(CONFIDENCE), 
+            max_confidence = max(CONFIDENCE), 
+            mean_confidence = mean(CONFIDENCE), 
+            median_confidence = median(CONFIDENCE),
+            min_acq_date = min(ACQ_DATE), 
+            max_acq_date = max(ACQ_DATE)) -> x
+  return(x)
+}
+```
+
+###Data 5
+```{r}
+data5 = st_intersection(hotspots_ea, data4) %>% sum_pt_poly()
+
+```
+
+```{r}
+head(data5)
+```
+#### Plot
+```{r eval=FALSE, include=FALSE}
+plot(st_geometry(ecozones_ea), border = 'grey', 
+     axes = TRUE)
+plot(st_geometry(st_centroid(data4)), pch = 3, col = 'red', add = TRUE)
+```
+#### Drop geometry from hotspot attributes
+
+```{r}
+st_geometry(data5) <- NULL
+```
+
+### Data 5---Merge  attributes
+Merge attributes from hotspots with into single shapefile
+```{r}
+data6 = merge(data4, data5, by="ID_obj")
+```
+
+```{r}
+data6
+```
+
+####Plot
+```{r eval=FALSE, include=FALSE}
+plot(st_geometry(ecozones_ea), border = 'grey', 
+     axes = TRUE)
+plot(st_geometry(st_centroid(fires_at_eco_arc_hs_merge)), pch = 3, col = 'red', add = TRUE)
+```
+
+
+## Data 7---Add unique fire ID
+
+```{r}
+head(data6)
+```
+Fire ID components
+1. RU
+2. YEAR
+3. Ecozone code
+4. Start date
+
+An add fire length in days
+
+```{r}
+data7 = data6 %>%
+  separate(min_acq_date, c("acq_year","acq_month", "acq_day"), sep = "-", remove=FALSE) %>%
+  mutate(burn_days = (max_julian_date - min_julian_date)) %>%
+  mutate(Fire_ID = paste("RU_", fire_yr,"_", eco_code, "_", acq_year, acq_month, acq_day, sep = "")) %>%
+  dplyr::select(ID_obj:max_acq_date, burn_days:Fire_ID, geometry)
+
+```
+
+```{r}
+data7
+```
+
+## Data 8---Yedoma
+st_make_valid(poly)
+```{r}
+data8 = st_join(data7, st_make_valid(yedoma_ea), largest=TRUE) 
+```
+
+```{r}
+data8
+```
+```{r}
+str(data8)
+```
+
+### Convert NA **Might not need here**
+
+
+```{r}
+data9 = data8 %>% dplyr::select(ID_obj:Fire_ID, yedoma, geometry) %>%
+  mutate_at(vars(yedoma), funs(factor(data8$yedoma, exclude = NULL, levels = c("yes", NA), labels = c("yes", "no")))) 
+
+
+```
+
+
+
+## Data 9---permafrost
+st_make_valid(poly)
+```{r}
+data10 = st_join(data9, st_make_valid(perma_ea), largest=TRUE) 
+```
+
+```{r}
+data10
+```
+
+
+### Convert NA 
+
+
+```{r}
+data11 = data10 %>% dplyr::select(ID_obj:yedoma, COMBO:LANDFORM)
+
+data11
+  
+```
+
+
+```{r}
+data11 %>% filter(ID_obj ==1451)
+
+```
+
+# Write to shapefile
+```{r}
+st_write(data11, "../outputs/2.3-GEE-Attribute-Shapefiles-EqualArea/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
+```
+
+

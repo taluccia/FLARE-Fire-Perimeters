@@ -1,0 +1,288 @@
+---
+title: "Test-hotspot-cutOFF-Issue"
+author: "Anna Talucci"
+date: "3/20/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Overview
+This code uses the [WWF Ecozones shapefile](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world). We subset the ecozones for NE Siberia to include the following:
+
+1. Bering tundra
+2. Chukchi peninsula tundra
+3. Cherskii-Kolyma mountain tundra
+4. East Siberia Tiaga
+5. Northeast Siberia coastal Tundra
+6. Northeast Siberia taiga
+7. Taimyr-central Siberia tundra 
+8. Trans-Baikal Bald Mountain Tundra
+
+While we will need the attribute field for the final fire perimeters, they are not neccessary for the polygons we use in GEE.
+
+
+
+# Library
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(purrr)
+library(readr)
+library(cowplot)
+library(ggcorrplot)
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(spatialEco)
+```
+
+# Projections
+
+WGS 84 need for gee
+```{r}
+wgs_proj =  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
+
+```
+
+Equal Area projection for russia need for buffering hotspot data
+https://gis.stackexchange.com/questions/264093/projection-for-russia-map
+
++proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
+
+```{r}
+ee_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
+```
+
+# Data
+st_write(ne_subset_ee, "../outputs/ecozones/ne_siberia_ecozones9_ee.shp", driver="ESRI Shapefile") 
+
+```{r}
+ecozone = st_read("../data/ecozones/ne_siberia_ecozones9_ee.shp", "ne_siberia_ecozones9_ee") 
+```
+
+```{r}
+ru = st_read("../data/russia/RUS_adm0.shp", "RUS_adm0") 
+```
+
+```{r}
+ru1 = st_read("../data/russia/RUS_adm1.shp", "RUS_adm1") 
+```
+
+```{r}
+head(ecozone)
+```
+# Equal Area
+```{r}
+ru_ee = st_transform(ru, crs=ee_russia)
+ru1_ee = st_transform(ru1, crs=ee_russia)
+```
+
+
+# Plot
+```{r}
+plot(ru_ee$geometry, col = '#ff333388'); #x
+plot(ecozone$geometry, add=TRUE, col='#33ff3388')#y
+title("russia: red,ecozone: green")
+```
+
+
+# Apply buffer to ecozone
+```{r}
+eco_buf_110km = st_buffer(ecozone, 110000)
+
+eco_buf_110km_un = sf::st_union(eco_buf_110km)
+
+eco_buf_110km_un_poly <- sf::st_cast(eco_buf_110km_un, "POLYGON")
+```
+
+
+```{r}
+plot(eco_buf_110km_un_poly)
+```
+
+
+
+```{r}
+plot(ru_ee$geometry, col = '#ff333388'); #x
+plot(eco_buf_110km_un_poly, add=TRUE, col='#33ff3388')#y
+title("russia: red,ecozone: green")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(eco_buf_110km_un_poly, "../outputs/ecozones/eco_SinglePoly_ee.shp", driver="ESRI Shapefile") 
+```
+
+
+# Split into 2 groups for large data
+
+## Group 1 Far Northeastern Ecozones 
+```{r}
+group1 = ecozone %>% 
+  filter(eco_code %in% c("CKMT", "NST", "NSCT", "CPT", "BT"))
+```
+
+```{r}
+ggplot(group1) + geom_sf()
+```
+
+### Apply buffer to ecozone
+```{r}
+grp1_buf_1km = st_buffer(group1, 1000)
+
+grp1_buf_1km_un = sf::st_union(grp1_buf_1km)
+
+grp1_buf_1km_un_poly <- sf::st_cast(grp1_buf_1km_un, "POLYGON")
+```
+
+```{r}
+plot(ru_ee$geometry, col = '#ff333388'); #x
+plot(grp1_buf_1km_un_poly, add=TRUE, col='#33ff3388')#y
+title("russia: red,ecozone: green")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(grp1_buf_1km_un_poly, "../outputs/ecozones/eco_NEPoly1_ee.shp", driver="ESRI Shapefile") 
+```
+
+## Group 2  Eastern Siberia Ecozones
+```{r}
+group2 = ecozone %>% 
+  filter(eco_code %in% c("EST", "TBBMT", "TCST", "SSFS"))
+```
+
+```{r}
+ggplot(group2) + geom_sf()
+```
+
+### Apply buffer to ecozone
+```{r}
+grp2_buf_110km = st_buffer(group2, 110000)
+
+grp2_buf_110km_un = sf::st_union(grp2_buf_110km)
+
+grp2_buf_110km_un_poly <- sf::st_cast(grp2_buf_110km_un, "POLYGON")
+
+grp2_buf_1km = st_buffer(grp2_buf_110km_un_poly, -109000)
+```
+
+```{r}
+plot(ru_ee$geometry, col = '#ff333388'); #x
+plot(grp2_buf_1km , add=TRUE, col='#33ff3388')#y
+plot(group2, add=TRUE)
+title("russia: red,ecozone: green")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(grp2_buf_1km, "../outputs/ecozones/eco_EPoly2_ee.shp", driver="ESRI Shapefile") 
+```
+
+### Split Eastern Siberia into 2 polygons by Russian Admin zones
+
+#### Filter  Russian  admin
+
+```{r}
+ru_admin1 = ru1_ee %>% 
+  filter(NAME_1 %in% c("Krasnoyarsk", "Zabaykal'ye", "Buryat", "Irkutsk", "Khakass", "Kemerovo"))
+```
+
+```{r}
+ggplot(ru_admin1) + geom_sf()
+```
+
+```{r}
+ru_admin2 = ru1_ee %>% 
+  filter(NAME_1 %in% c( "Sakha", "Khabarovsk", "Amur"))
+```
+
+```{r}
+ggplot(ru_admin2) + geom_sf()
+```
+```{r}
+ru_admin2_buf_10km = st_buffer(ru_admin2, 10000)
+
+ru_admin2_buf_10km_un = sf::st_union(ru_admin2_buf_10km)
+
+ru_admin2_buf_10km_un_poly <- sf::st_cast(ru_admin2_buf_10km_un, "POLYGON")
+```
+
+```{r}
+ggplot(ru_admin2_buf_10km_un_poly) + geom_sf()
+```
+
+##### Crop Group 2 ecozones by Russian  Admin zones
+
+###### Eastern portion
+
+###### Crop
+```{r}
+epoly2_1 = st_crop(grp2_buf_1km, ru_admin2_buf_1km_un_poly)
+
+```
+
+```{r}
+plot(grp2_buf_1km, col = '#ff333388'); #x
+plot(ru_admin2_buf_1km_un_poly , add=TRUE, col='#33ff3388')#y
+plot(epoly2_1, add=TRUE, col='#33ff3388')
+title("russia: grp2_buf_1km,ru_admin2_buf_1km_un_poly: green")
+```
+
+```{r}
+ggplot(epoly2_1) + geom_sf()
+```
+###### Buffer by 1 km
+
+```{r}
+epoly2_1_buf_1km = st_buffer(epoly2_1, 1000)
+```
+
+```{r}
+ggplot(epoly2_1_buf_1km) + geom_sf()
+```
+
+###### Write to shapefile
+```{r eval=FALSE, include=FALSE}
+st_write(epoly2_1_buf_1km, "../outputs/ecozones/eco_E_EPoly2_1_ee.shp", driver="ESRI Shapefile") 
+```
+
+#####  Wester Portion
+###### Crop
+```{r}
+epoly2_2 = st_difference(grp2_buf_1km, epoly2_1)
+
+```
+
+```{r}
+ggplot(epoly2_2) + geom_sf()
+```
+
+```{r}
+plot(group2$geometry)
+plot(epoly2_1, add=TRUE, col = '#ff333388'); #x
+plot(epoly2_2 , add=TRUE, col='#33ff3388')#y
+
+title("a: red, b: green")
+```
+
+###### Buffer by 1 km
+
+```{r}
+epoly2_2_buf_1km = st_buffer(epoly2_2, 1000)
+```
+
+```{r}
+ggplot(epoly2_2_buf_1km) + geom_sf()
+```
+
+###### Write to shapefile
+```{r eval=FALSE, include=FALSE}
+st_write(epoly2_2_buf_1km, "../outputs/ecozones/eco_W_EPoly2_2_ee.shp", driver="ESRI Shapefile") 
+```
