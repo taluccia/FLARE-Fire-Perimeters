@@ -207,15 +207,15 @@ ru_admin2 = ru1_ee %>%
 ggplot(ru_admin2) + geom_sf()
 ```
 ```{r}
-ru_admin2_buf_10km = st_buffer(ru_admin2, 10000)
+ru_admin2_buf = st_buffer(ru_admin2, 10000)
 
-ru_admin2_buf_10km_un = sf::st_union(ru_admin2_buf_10km)
+ru_admin2_un = sf::st_union(ru_admin2_buf)
 
-ru_admin2_buf_10km_un_poly <- sf::st_cast(ru_admin2_buf_10km_un, "POLYGON")
+ru_admin2_poly <- sf::st_cast(ru_admin2_un, "POLYGON")
 ```
 
 ```{r}
-ggplot(ru_admin2_buf_10km_un_poly) + geom_sf()
+ggplot(ru_admin2_poly) + geom_sf()
 ```
 
 ##### Crop Group 2 ecozones by Russian  Admin zones
@@ -224,13 +224,13 @@ ggplot(ru_admin2_buf_10km_un_poly) + geom_sf()
 
 ###### Crop
 ```{r}
-epoly2_1 = st_crop(grp2_buf_1km, ru_admin2_buf_1km_un_poly)
+epoly2_1 = st_crop(grp2_buf_1km, ru_admin2_poly)
 
 ```
 
 ```{r}
 plot(grp2_buf_1km, col = '#ff333388'); #x
-plot(ru_admin2_buf_1km_un_poly , add=TRUE, col='#33ff3388')#y
+plot(ru_admin2_poly , add=TRUE, col='#33ff3388')#y
 plot(epoly2_1, add=TRUE, col='#33ff3388')
 title("russia: grp2_buf_1km,ru_admin2_buf_1km_un_poly: green")
 ```
