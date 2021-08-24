@@ -150,7 +150,7 @@ all_shp_cast = st_cast(all_shp_un,"POLYGON")
 
 # write Shapefile
 ```{r}
-st_write(all_shp_cast, "../outputs/2.1-GEE-clean-shapefiles-EqualArea/combine1_equalarea_2020.shp", driver="ESRI Shapefile") 
+st_write(all_shp_cast, "../outputs/3.1-GEE-clean-shapefiles-EqualArea/combine1_equalarea_2020.shp", driver="ESRI Shapefile") 
 ```
 
 

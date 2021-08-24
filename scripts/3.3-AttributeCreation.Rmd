@@ -51,7 +51,7 @@ ea_ru = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps
 
 ## Fire perimeters
 ```{r}
-fires = st_read("../data/2.2-GEE-clean-shapefiles-EqualArea/nbuf_equalarea_2020.shp", "nbuf_equalarea_2020") 
+fires = st_read("../data/3.2-GEE-clean-shapefiles-EqualArea/nbuf_equalarea_2020.shp", "nbuf_equalarea_2020") 
 ```
 
 
@@ -362,7 +362,7 @@ data11 %>% filter(ID_obj ==1451)
 
 # Write to shapefile
 ```{r}
-st_write(data11, "../outputs/2.3-GEE-Attribute-Shapefiles-EqualArea/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
+st_write(data11, "../outputs/3.3-GEE-Attribute-Shapefiles-EqualArea/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
 ```
 
 
