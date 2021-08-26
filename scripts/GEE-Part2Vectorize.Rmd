@@ -1,0 +1,90 @@
+---
+title: "GEE Part 2 Vectorize"
+author: "Anna Talucci"
+date: "8/26/2021"
+output: html_document
+---
+
+# Overview
+
+The second part of image processing Google Earth Engine (GEE) applies a vectorize function to deliniate fire perimeters. 
+
+[Link to GEE code](https://code.earthengine.google.com/?scriptPath=users%2Factalucci%2FFLARE-FireActivity%3APart2-FLARE-Vectors-Ecozone)
+
+
+
+
+```{js}
+/** Part 2: FLARE-Vectorize by Ecozone burned areas
+ * 
+ * Script by Anna Talucci - actalucci@gmail.com
+ * 
+ * Notes: 
+ * — on 30m binary burned image
+ * — harmonized
+ * - Equal Area
+*/
+
+// CENTER MAP   
+
+Map.setCenter(160.092, 66.704, 5);
+
+// Projection Equal Area (https://spatialreference.org/ref/sr-org/albers-equal-area-russia/)
+var proj = ee.Projection('PROJCS["Albers Conical Equal Area",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Albers_Conic_Equal_Area"],PARAMETER["standard_parallel_1",50],PARAMETER["standard_parallel_2",70],PARAMETER["latitude_of_center",56],PARAMETER["longitude_of_center",100],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["meters",1]]').atScale(10000)
+
+// changes years for specific fire year
+var year = '2020' //Fire year
+
+// Iterate through Ecozone Polygons
+var NEPoly1_ee = "NEPoly1_ee"
+var E_EPoly2_1_ee = "E_EPoly2_1_ee"
+var W_EPoly2_2_ee = "W_EPoly2_2_ee"
+
+var eco_code = W_EPoly2_2_ee 
+
+// BINARY BURNED IMAGE from Assets Split across 3 ROI from Equal Area
+// var binary_burned = ee.Image('users/actalucci/FLARE-Binary-HarmEa/NEPoly1_ee_dnbrBinaryHarmEA_'+year)// NE_Poly_ee
+// var binary_burned = ee.Image('users/actalucci/FLARE-Binary-HarmEa/E_EPoly2_1_ee_dnbrBinaryHarmEA_'+year)// E_EPoly2_1_ee 
+var binary_burned = ee.Image('users/actalucci/FLARE-Binary-HarmEa/W_EPoly2_2_ee_dnbrBinaryHarmEA_'+year)//W_EPoly2_1_ee
+
+//  Load HOTSPOT POLY
+var hotspots = ee.FeatureCollection("users/actalucci/FLARE-HS-Poly-Eco-EA/hspoly_EA_"+year);
+
+// MAP LAYERS
+Map.addLayer(binary_burned, {}, 'binary_burned')
+
+
+//  BUFFER FUNCTION   
+
+var bufferPoly = function(feature) {
+  return feature.buffer(500);   // 500 m buffer
+};
+
+// VECTORIZE     
+var mask = binary_burned.toInt(); // define as integer
+mask = mask.updateMask(mask.neq(0)); // mask values not equal to zero
+
+
+// --Vectorize based on resample_median at 90 m within hotspot poly to minimize compputing error
+var vectors = mask.addBands(binary_burned).reduceToVectors({
+  reducer: ee.Reducer.mean(),
+  geometry: hotspots,
+  scale: 90,
+  geometryType: 'polygon',
+  eightConnected: true,
+  labelProperty: 'mask',
+  crs: proj,
+  maxPixels: 1e13
+});
+
+// EXPORT to Drive  
+Export.table.toDrive({
+  collection: vectors,
+  description:eco_code+'_HarmEaFires_'+year,
+  folder: 'GEE',
+  fileFormat: 'SHP'
+});
+
+
+
+```
