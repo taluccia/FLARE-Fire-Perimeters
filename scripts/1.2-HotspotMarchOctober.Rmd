@@ -7,18 +7,16 @@ output: html_document
 
 # Overview
 
-
+This script subsets MODIS hotspot data for March thru October each year from 2001-2020.
 
 Data acquired from [FIRMS](https://firms.modaps.eosdis.nasa.gov/download/create.php)
 
-Description of [Modis and VIIRS data](https://earthdata.nasa.gov/earth-observation-data/near-real-time/firms)
+Description of [Modis data](https://earthdata.nasa.gov/earth-observation-data/near-real-time/firms)
 
-VIIRS launch October 2011, fire season data available 2012-present
-MODIS launch    , available 2001-present
+MODIS data is available 2001-present and was use instead of VIIRS, which launched October 2011 and has fire season data available 2012-present. Adding the data required more computing processing then avaialble.
 
-Subset data March to October, after this point data will be converted to polygon data
- 
-What is included in this script:
+The data is subset March to October to capture wildfire activity. The point data is eventially convert to polygons in script 1.3.
+
 
 # Clear workspace
 
@@ -39,11 +37,7 @@ library(spatialEco)
 library(lubridate)
 ```
 
-
-
-# Hotspot Data (MODIS and VIIRS)
-
-## Read in MODIS only data (2001-2011)
+# Read in MODIS  data (2001-2020)
 
 ```{r}
 hs = st_read("../data/FIRMS_Annual_PointData/fire_archive_M6_2001.shp", "fire_archive_M6_2001") 
@@ -77,38 +71,12 @@ hs2019 = st_read("../data/FIRMS_Annual_PointData/fire_archive_M6_2019.shp", "fir
 hs2020 = st_read("../data/FIRMS_Annual_PointData/fire_archive_M6_2020.shp", "fire_archive_M6_2020") 
 ```
 
-## Read in Combined MODIS/VIIRS Data (2012-2020)
-```{r M6-V1-2012-2020, eval=FALSE, include=FALSE}
 
-hs2012 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2012.shp", "M6_V1_2012")
-hs2013 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2013.shp", "M6_V1_2013")
-hs2014 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2014.shp", "M6_V1_2014")
-hs2015 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2015.shp", "M6_V1_2015")
-hs2016 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2016.shp", "M6_V1_2016")
-hs2017 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2017.shp", "M6_V1_2017")
-hs2018 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2018.shp", "M6_V1_2018")
-hs2019 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2019.shp", "M6_V1_2019")
-hs2020 = st_read("../data/FIRMS_Annual_PointData/M6_V1_2020.shp", "M6_V1_2020")
- 
-```
 
 # Process dataset
-## Subset Hotspot data March to October
-
-```{r}
-head(hs)
-```
-```{r}
-hs_month = hs %>% filter(ACQ_DATE >= "2001/03/01" & ACQ_DATE <="2001/10/31")
-```
 
 
-```{r}
-head(hs_month)
-tail(hs_month)
-```
-
-# For each year
+## Subset for each year
 ```{r}
 hs2001_month = hs2001 %>% filter(ACQ_DATE >= "2001/03/01" & ACQ_DATE <="2001/10/31")
 hs2002_month = hs2002 %>% filter(ACQ_DATE >= "2002/03/01" & ACQ_DATE <="2002/10/31")
@@ -139,7 +107,7 @@ hs2019_month = hs2019 %>% filter(ACQ_DATE >= "2019/03/01" & ACQ_DATE <="2019/10/
 hs2020_month = hs2020 %>% filter(ACQ_DATE >= "2020/03/01" & ACQ_DATE <="2020/10/31")
 ```
 
-### Write to file
+# Write to file
 Create a shapefile
 
 ```{r eval=FALSE, include=FALSE}
