@@ -6,25 +6,23 @@ output: html_document
 ---
 
 # Overview
-Convert Hotspot point data from MODIS to polygons. The purpose of this is to limit the extent of the vector function in GEE to delinieate fire perimeters.
+Convert Hotspot point data from MODIS to polygons. The purpose of this is to limit the extent of the vector function in GEE to delinieate fire perimeters. This script utilizes data process in script 1.2
 
 
 Data acquired from [FIRMS](https://firms.modaps.eosdis.nasa.gov/download/create.php)
 
-Description of [Modis and VIIRS data](https://earthdata.nasa.gov/earth-observation-data/near-real-time/firms)
+Description of [Modis data](https://earthdata.nasa.gov/earth-observation-data/near-real-time/firms).
 
-VIIRS launch October 2012, fire season data available 2012-present
-MODIS launch    , available 2001-present
 
-Take all annual hotspot data and make polygons 2001-2020. We did not end up combining MODIS/VIIRS data from 2012-2020, because the data set became to large.
+MODIS  available 2001-present
+
+Take all annual hotspot data and make polygons 2001-2020. We did not end up combining MODIS/VIIRS data from 2012-2020, because the data set became to large to process.
  
-What is included in this script:
+Special Notes:
 
 1. Processing hotspot point data to polygon data
-2. 2003 is process separately done to a single point on the 180 degree latitude that causes issues when switching from equal area projection to WGS 84 Mecator.
-3. 2019 & 2020 are process separately 
-Note:
-Because these data sets area large spatial data sets, we will set this up to run annual data across each bounding box.
+2. 2003 is process separately due to a single point on the 180 degree latitude that causes issues when switching from equal area projection to WGS 84 Mecator.
+3. 2019 & 2020 are process separately---Because these data sets area large spatial data sets, we will set this up to run annual data across each bounding box.
 
 # Clear workspace
 
@@ -49,11 +47,6 @@ library(nngeo) # remove holes in polygons; works with sf objects
 
 # Projections
 
-WGS 84 need for gee
-```{r}
-wgs_proj =  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
-```
-
 [Equal Area projection for Russia](https://gis.stackexchange.com/questions/264093/projection-for-russia-map) is needed for buffering hotspot data.
 
 The projection:
@@ -64,33 +57,11 @@ ee_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +e
 ```
 
 # Data
+##  Hotspot Data (MODIS)**(change year on data and saving at end)**
 
-## Hotspot Data (MODIS)**(change year on data and saving at end)**
 ```{r}
 hs = readOGR("../data/M6-march-october/M6_mar-oct_2003.shp", "M6_mar-oct_2003") 
 ```
-
-### project to equal area russia
-```{r}
-hs_ee = spTransform(hs, CRS(ee_russia))
-```
-
-## Chukchi
-
-```{r eval=FALSE, include=FALSE}
-ch_west = st_read("../data/ecozones/chukchi_east_west/cpt_bt_west.shp", "cpt_bt_west") 
-```
-
-```{r eval=FALSE, include=FALSE}
-ch_east = st_read("../data/ecozones/chukchi_east_west/cpt_bt_east.shp", "cpt_bt_east") 
-```
-
-### Equal Area
-```{r eval=FALSE, include=FALSE}
-ch_west_ee = st_transform(ch_west, crs=ee_russia)
-ch_east_ee = st_transform(ch_east, crs=ee_russia)
-```
-
 ## Single Ecozone Polygon
 All nine ecozones have been combined into a single polygon
 
@@ -98,96 +69,64 @@ All nine ecozones have been combined into a single polygon
 eco_ee = readOGR("../data/ecozones/eco_SinglePoly_ee.shp", "eco_SinglePoly_ee") 
 ```
 
-## Ecozone split for large data
-### NE Poly 1
-Covers
+## Three ROI to split large data
+GEE ROI (Regions of interest) to split the processing into three spatial extents including the NE Poly 1 that covers all of northeaster siberia, Eastern portion of E Poly 2 and the Western portion of E Poly 2 that cover everything west of the northeastern region.
+
 ```{r}
 eco_nepoly1_ee = readOGR("../data/ecozones/eco_NEPoly1_ee.shp", "eco_NEPoly1_ee") 
 ```
-
-### Eastern portion of E Poly 2
 
 ```{r}
 eco_E_EPoly2_1_ee = readOGR("../data/ecozones/eco_E_EPoly2_1_ee.shp", "eco_E_EPoly2_1_ee") 
 ```
 
-### Western portion of E Poly 2
-
 ```{r}
 eco_W_EPoly2_2_ee =  readOGR("../data/ecozones/eco_W_EPoly2_2_ee.shp", "eco_W_EPoly2_2_ee") 
 ```
 
+
+# Reproject to equal area russia
+```{r}
+hs_ee = spTransform(hs, CRS(ee_russia))
+```
+
+
+
 # Process point to polygon All years except 2003, 2019, 2020
-This code uses a single polygon that covers all nine ecozones
+This code uses a single polygon that covers all eight ecozones
 
 1. Select points within ecozone region
 2. Buffer points by 3000 m overlapping polygons join
 3. Remove any holes in the polygons
-4. Convert back to WGS 84
 5. Conver to sf object
 6. Write to shapefile
 
+## point to Polygon
 ```{r}
 eco_hs = hs_ee[eco_ee, ]
 eco_hs_3k = gBuffer(eco_hs, width = 3000, capStyle="ROUND", joinStyle="ROUND") # Buffer by 3k
 eco_hs_3k_nh = remove.holes(eco_hs_3k) # Remove holes in polygons
-eco_hs_wgs = spTransform(eco_hs_3k_nh, CRS( wgs_proj)) # reproject to WGS for GEE
-eco_hs_wgs_sf = st_as_sf(eco_hs_wgs)
+
 ```
 
+```{r}
+hs_poly_sf = st_as_sf(eco_hs_3k_nh)
+```
+
+## Write to shapefile
 ```{r eval=FALSE, include=FALSE}
-st_write(eco_hs_wgs_sf, "../outputs/hotspot-poly-single-eco/hspoly_singleEco_2018.shp", driver="ESRI Shapefile")
+st_write(hs_poly_sf, "../outputs/hotspot-poly-EqualArea/hspoly_EA_2001.shp", driver="ESRI Shapefile")
 ```
 
-
-# Find point at 180 degrees for 2003 
-
-A single hotspot point sits on the 180/-180 longitude. This locaton causes an issue once the polygons have been created and convered from Equal-Area to WGS 84 Mecator projection.
-
-## Convert to SF object
-```{r}
-hs_ee_sf = st_as_sf(hs_ee)
-```
-
-## Find points near 180 degrees longitude
-```{r}
-issue_pt = hs_ee_sf %>% filter(LONGITUDE > 179)
-issue_pt
-```
-
-## Remove point
-```{r}
-remove_issue_pt = hs_ee_sf %>% filter(LONGITUDE != 179.9466)
-```
-
-```{r}
-plot(ch_west_ee$geometry);
-plot(remove_issue_pt, add=TRUE, col='red')
-```
-
-```{r}
-plot(ch_west_ee$geometry);
-plot(hs_ee_sf, add=TRUE, col='red');
-plot(issue_pt, add=TRUE, col='blue');
-```
-
-## Remove point  @ 180 for 2003
-
-```{r}
-hs_ee_sf = st_as_sf(hs_ee)# Hotspots as sf object
-remove_issue_pt = hs_ee_sf %>% filter(LONGITUDE != 179.9466)# Filter out point
-eco_hs_ee_sp = as(remove_issue_pt, 'Spatial')# convert back to sp
-```
 
 # Process Point to Polygon for Large data year 2003, 2019 & 2020)
+
 Split the region of interest (ROI; single polygon) into 3 ROIs.  Process the point to polygon on the 3 ROIs and then combine into single shapefile.
 
 1. Process point to polygon for each of three ecozone boundaries
 2. Combine the polygons from the three ecozone boundaries into a single shapefile.
 
 ## For NE Poly 1
-Use eco_nepoly1_ee
-
 ```{r}
 eco1_hs = hs_ee[eco_nepoly1_ee, ]
 eco1_hs_3k = gBuffer(eco1_hs, width = 3000, capStyle="ROUND", joinStyle="ROUND") # Buffer by 3k
@@ -196,13 +135,7 @@ eco1_hs_3k_nh = remove.holes(eco1_hs_3k) # Remove holes in polygons
 eco1_hs_EA_sf = st_as_sf(eco1_hs_3k_nh)
 ```
 
-```{r eval=FALSE, include=FALSE}
-st_write(eco1_hs_EA_sf, "../outputs/hotspot-poly-EqualArea/hspoly_NE_Eco_EA_2003.shp", driver="ESRI Shapefile")
-```
-
 ## For eastern portion of E Poly 2
-Use ecozone boundary eco_E_EPoly2_1_ee
-
 ```{r}
 eco2_hs = hs_ee[eco_E_EPoly2_1_ee, ]
 eco2_hs_3k = gBuffer(eco2_hs, width = 3000, capStyle="ROUND", joinStyle="ROUND") # Buffer by 3k
@@ -211,12 +144,7 @@ eco2_hs_3k_nh = remove.holes(eco2_hs_3k) # Remove holes in polygons
 eco2_hs_EA_sf = st_as_sf(eco2_hs_3k_nh)
 ```
 
-```{r eval=FALSE, include=FALSE}
-st_write(eco2_hs_EA_sf, "../outputs/hotspot-poly-EqualArea/hspoly_EEPOLY_Eco_EA_2003.shp", driver="ESRI Shapefile")
-```
-
 ## For western portion of E Poly 2
-
 ```{r}
 eco3_hs = hs_ee[eco_W_EPoly2_2_ee, ]
 eco3_hs_3k = gBuffer(eco3_hs, width = 3000, capStyle="ROUND", joinStyle="ROUND") # Buffer by 3k
@@ -225,14 +153,7 @@ eco3_hs_3k_nh = remove.holes(eco3_hs_3k) # Remove holes in polygons
 eco3_hs_EA_sf = st_as_sf(eco3_hs_3k_nh)
 ```
 
-
-
-```{r eval=FALSE, include=FALSE}
-st_write(eco3_hs_EA_sf, "../outputs/hotspot-poly-EqualArea/hspoly_WEPoly_Eco_EA_2003.shp", driver="ESRI Shapefile")
-```
-
-
-## Combine Hotspot poly into one file for 2019 & 2020
+## Combine Hotspot poly into one file for 2003, 2019 & 2020
 1. Convert to sf object
 2. `rbind` to combine into single file
 3. Union to merge overlaping polygons
@@ -255,8 +176,9 @@ merge_polys_un_poly_nh = nngeo::st_remove_holes(merge_polys_un_poly)
 ```{r}
 plot(merge_polys_un_poly_nh)
 ```
-```{r}
 
+## Write to shapefile
+```{r eval=FALSE, include=FALSE}
 st_write(merge_polys_un_poly_nh, "../outputs/hotspot-poly-EqualArea/hspoly_EA_2003.shp", driver="ESRI Shapefile")
 ```
 
