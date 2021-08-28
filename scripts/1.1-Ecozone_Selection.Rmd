@@ -151,3 +151,30 @@ st_write(ne_subset, "../outputs/ecozones/ne_siberia_ecozones9.shp", driver="ESRI
 ```
 
 
+# Create Polygon for Arctic
+
+```{r}
+eco_wgs_crop = ne_subset %>% st_crop(y = st_bbox(c(xmin = -180, ymin = 66.45, xmax = 180, ymax = 90))) 
+```
+
+```{r}
+eco_crop_ee = st_transform(eco_wgs_crop, ee_russia)
+```
+
+```{r}
+plot(eco_crop_ee$geometry)
+```
+
+```{r}
+head(eco_crop_ee)
+```
+
+```{r}
+arctic_eco_bounds = eco_crop_ee %>% dplyr::mutate(location = "arctic") %>% dplyr::select(location)
+```
+
+
+```{r eval=FALSE, include=FALSE}
+st_write(arctic_eco_bounds, "../outputs/ecozones/ecozone_arctic_crop_ee.shp", driver="ESRI Shapefile") 
+
+```
