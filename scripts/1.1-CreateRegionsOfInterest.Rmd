@@ -1,5 +1,5 @@
 ---
-title: "Test-hotspot-cutOFF-Issue"
+title: "Creat regions of interests"
 author: "Anna Talucci"
 date: "3/20/2021"
 output: html_document
@@ -18,13 +18,13 @@ This code uses the [WWF Ecozones shapefile](https://www.worldwildlife.org/public
 1. Bering tundra
 2. Chukchi peninsula tundra
 3. Cherskii-Kolyma mountain tundra
-4. East Siberia Tiaga
+4. East Siberia Taiga
 5. Northeast Siberia coastal Tundra
 6. Northeast Siberia taiga
 7. Taimyr-central Siberia tundra 
 8. Trans-Baikal Bald Mountain Tundra
 
-While we will need the attribute field for the final fire perimeters, they are not neccessary for the polygons we use in GEE as ROIs.
+While we will need the attribute field for the final fire perimeters, they are not necessary for the polygons we use in GEE as ROIs.
 
 # Packages
 
@@ -47,7 +47,7 @@ library(spatialEco)
 
 # Define Projections
 
-Equal Area projection for russia need for buffering hotspot data
+Equal Area projection for Russia need for buffering hotspot data
 https://gis.stackexchange.com/questions/264093/projection-for-russia-map
 
 +proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
@@ -239,7 +239,7 @@ ggplot(epoly2_1_buf_1km) + geom_sf()
 st_write(epoly2_1_buf_1km, "../outputs/ecozones/eco_E_EPoly2_1_ee.shp", driver="ESRI Shapefile") 
 ```
 
-####  Crop Wester Portion
+####  Crop Western Portion
 ```{r}
 epoly2_2 = st_difference(grp2_buf_1km, epoly2_1)
 
