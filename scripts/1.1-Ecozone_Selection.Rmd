@@ -1,0 +1,153 @@
+---
+title: "Ecozone Selection"
+author: "Anna Talucci"
+date: "10/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview
+This script subsets the global ecozone data to the ecozones of interest.
+
+This code uses the [WWF Ecozones shapefile](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world). We subset the ecozones for NE Siberia to include the following:
+
+1. Bering tundra
+2. Chukchi peninsula tundra
+3. Cherskii-Kolyma mountain tundra
+4. East Siberia Taiga
+5. Northeast Siberia coastal Tundra
+6. Northeast Siberia taiga
+7. Taimyr-central Siberia tundra 
+8. Trans-Baikal Bald Mountain Tundra
+
+While we will need the attribute field for the final fire perimeters, they are not necessary for the polygons we use in GEE.
+
+Here we split the ecozones needed into individual polygon shapefile with a couple of exceptions. We will combine Cherskii-Kolyma mountain tundra and Northeast Siberia taiga into one polygon for GEE. We will also combine Bering tundra Chukchi peninsula tundra, which will then be split by east and west hemisphere. Treat East Siberia Taiga and Trans-Baikal Bald Mountain Tundra as one spatial unit.
+
+2021-03-19 -- add South Siberian forest steppe because of hole inside south Eastern portion of polygon
+
+# Library
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(purrr)
+library(readr)
+library(cowplot)
+library(ggcorrplot)
+library(sp)
+library(sf)
+library(rgdal) # geospatial data
+library(raster)
+library(rgeos) # GIS Geometry
+library(foreign) # deals with dbf files
+library(spatialEco)
+```
+
+# Data
+```{r}
+ecozone = st_read("../data/wwf_ecozone/wwf_terr_ecos_oRn.shp", "wwf_terr_ecos_oRn") 
+```
+
+```{r}
+head(ecozone)
+```
+
+```{r}
+biome = ecozone %>% filter(BIOME==11)
+```
+
+```{r}
+unique(biome$ECO_NAME)
+```
+
+# Define Projections
+
+[Equal Area projection for Russia](https://gis.stackexchange.com/questions/264093/projection-for-russia-map)
+
++proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
+
+```{r}
+ee_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
+```
+
+
+# Select ecozones for region of interest
+
+## Create target of require ecozones 
+1. Cherskii-Kolyma mountain tundra (CKMT)
+2. Northeast Siberian coastal tundra (NSCT)
+3. Chukchi Peninsula tundra (CPT)
+4. Northeast Siberian taiga (NST)
+5. Bering tundra (BT)
+6. Taimyr-Central Siberian tundra (TCST)
+7. East Siberian taiga (EST)
+8. Trans-Baikal Bald Mountain tundra (TBBMT)
+9. South Siberian forest steppe (SSFT)
+```{r}
+target = c("Cherskii-Kolyma mountain tundra", "Northeast Siberian coastal tundra","Chukchi Peninsula tundra", "Northeast Siberian taiga", "Bering tundra", "Taimyr-Central Siberian tundra", "East Siberian taiga", "Trans-Baikal Bald Mountain tundra", "South Siberian forest steppe")
+```
+
+## Apply filter
+
+Filter for all
+```{r}
+ne_subset = ecozone %>% 
+  filter(ECO_NAME %in% target) %>% 
+  mutate(eco_code = ifelse(ECO_NAME %in% "Cherskii-Kolyma mountain tundra", "CKMT",
+       ifelse(ECO_NAME %in% "Northeast Siberian coastal tundra", "NSCT",
+          ifelse(ECO_NAME %in% "Chukchi Peninsula tundra", "CPT",
+            ifelse(ECO_NAME %in% "Northeast Siberian taiga", "NST",
+              ifelse(ECO_NAME %in% "Bering tundra", "BT",
+                ifelse(ECO_NAME %in% "Taimyr-Central Siberian tundra", "TCST",
+                  ifelse(ECO_NAME %in% "Trans-Baikal Bald Mountain tundra", "TBBMT",
+                         ifelse(ECO_NAME %in% "East Siberian taiga", "EST",
+            ifelse(ECO_NAME %in%  "South Siberian forest steppe", "SSFS", "NA"))))))))))
+```
+
+
+## Re-project to equal area
+```{r}
+ne_subset_ee = st_transform(ne_subset, crs=ee_russia)
+```
+
+```{r}
+  
+ggplot(ne_subset_ee) + geom_sf()
+```
+
+## Check data
+```{r}
+ne_subset
+```
+
+```{r}
+head(ne_subset)
+```
+```{r}
+ne_subset$eco_code
+```
+
+
+```{r}
+ne_subset %>%
+  summarise_all(funs(sum(is.na(.))))
+```
+
+```{r}
+ne_subset$eco_code
+```
+
+
+## Write Shapefiles
+
+```{r eval=FALSE, include=FALSE}
+st_write(ne_subset_ee, "../outputs/ecozones/ne_siberia_ecozones9_ee.shp", driver="ESRI Shapefile") 
+st_write(ne_subset, "../outputs/ecozones/ne_siberia_ecozones9.shp", driver="ESRI Shapefile") 
+```
+
+
