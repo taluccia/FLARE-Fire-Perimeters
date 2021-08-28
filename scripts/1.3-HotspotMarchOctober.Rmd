@@ -1,5 +1,5 @@
 ---
-title: "Subset Annual Modis and VIIRS to March-October"
+title: "Subset Annual Modis for March-October"
 author: "Anna Talucci"
 date: "2/10/2021"
 output: html_document
@@ -13,9 +13,9 @@ Data acquired from [FIRMS](https://firms.modaps.eosdis.nasa.gov/download/create.
 
 Description of [Modis data](https://earthdata.nasa.gov/earth-observation-data/near-real-time/firms)
 
-MODIS data is available 2001-present and was use instead of VIIRS, which launched October 2011 and has fire season data available 2012-present. Adding the data required more computing processing then avaialble.
+MODIS data is available 2001-present and was use instead of VIIRS, which launched October 2011 and has fire season data available 2012-present. Adding the data required more computing processing then available.
 
-The data is subset March to October to capture wildfire activity. The point data is eventially convert to polygons in script 1.3.
+The data is subset March to October to capture wildfire activity. The point data is eventually convert to polygons in script 1.4.
 
 
 # Clear workspace
@@ -23,6 +23,7 @@ The data is subset March to October to capture wildfire activity. The point data
 ```{r}
 rm(list=ls()) 
 ```
+
 # Packages
 
 ```{r include=FALSE}
@@ -73,10 +74,7 @@ hs2020 = st_read("../data/FIRMS_Annual_PointData/fire_archive_M6_2020.shp", "fir
 
 
 
-# Process dataset
-
-
-## Subset for each year
+# Subset from March to October for each year
 ```{r}
 hs2001_month = hs2001 %>% filter(ACQ_DATE >= "2001/03/01" & ACQ_DATE <="2001/10/31")
 hs2002_month = hs2002 %>% filter(ACQ_DATE >= "2002/03/01" & ACQ_DATE <="2002/10/31")
@@ -107,8 +105,7 @@ hs2019_month = hs2019 %>% filter(ACQ_DATE >= "2019/03/01" & ACQ_DATE <="2019/10/
 hs2020_month = hs2020 %>% filter(ACQ_DATE >= "2020/03/01" & ACQ_DATE <="2020/10/31")
 ```
 
-# Write to file
-Create a shapefile
+# Write to shapefile
 
 ```{r eval=FALSE, include=FALSE}
 st_write(hs2001_month, "../outputs/M6-march-october/M6_mar-oct_2001.shp", driver="ESRI Shapefile")
