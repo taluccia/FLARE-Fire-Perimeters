@@ -17,7 +17,7 @@ rm(list=ls())
 
 # Overview
 
-Rename columns, save vectors.
+Clean up  attribute data by removing some columns. Then, rename attribute columns to simplify, so they can bu used across multiple platforms.
 
 # Packages
 
@@ -36,10 +36,9 @@ library(lubridate)
 ```
 
 
-# Data
-## Shapefile
+# Data Shapefile
 ```{r}
-fires = st_read("../data/3.3-GEE-Attribute-Shapefiles-EqualArea/SiberiaFires_v2_2020.shp", "SiberiaFires_v2_2020") 
+fires = st_read("../data/3.3-Attribute/SiberiaFires_v2_2020.shp", "SiberiaFires_v2_2020") 
 ```
 
 ```{r}

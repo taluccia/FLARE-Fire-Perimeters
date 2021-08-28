@@ -1,5 +1,5 @@
 ---
-title: "CombineAllFireYears"
+title: "Combine All Fire Years"
 author: "Anna Talucci"
 date: "5/21/2021"
 output: html_document
@@ -17,7 +17,12 @@ rm(list=ls())
 
 # Overview
 
-Combine all fires year shapefiles into one
+Combine individual fires year shapefiles into one shapefile for 2001-2020 plus some additional modification that include: 
+
+1. Add fire size class. 
+2. Remove fires less than 200 ha.
+3. Remove fires with an average confidence of zero 
+4. Calculate the number of days each fire burned
 
 # Packages
 
@@ -73,16 +78,17 @@ f20 = st_read("../data/3.4-Vectors/SiberiaFires_v2_2020.shp", "SiberiaFires_v2_2
 f20
 ```
 
-
 ```{r}
 f20 %>% filter(IDobj == "3532")
 
 ```
 
+# Combine all shapefiles
 ```{r}
 all_fires = dplyr::bind_rows(f01, f02, f03, f04, f05, f06, f07, f08, f09, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20)
 ```
 
+# Look at combined data
 ```{r}
 head(all_fires)
 ```
@@ -91,19 +97,13 @@ head(all_fires)
 tail(all_fires)
 ```
 
-
-
-
-
-
-
 ```{r}
 all_fires
 ```
 
 # write to check data
 ```{r eval=FALSE, include=FALSE}
-st_write(all_fires, "../outputs/2.5-AllFires/all_fires_2001-2020.shp", driver="ESRI Shapefile") 
+st_write(all_fires, "../outputs/3.5-AllFires/all_fires_2001-2020.shp", driver="ESRI Shapefile") 
 ```
 
 # Remove wierd triangles
@@ -156,6 +156,7 @@ fire_class
 fires smaller than 200 ha (Based on Stocks, 2002)
 Remove perimeters with 0 confidence (based on [FIRMS](https://earthdata.nasa.gov/faq/firms-faq) and the dataset)
 Add 1 to total days to acount for fires that burn only during a single day (start and end on same date)
+
 ```{r}
 fire_class %>% filter(SizeHa<200 | AvgConf==0) 
 ```
@@ -181,7 +182,7 @@ data1 %>% filter(IDobj == 1451)
 
 # Write to shapefile
 ```{r eval=FALSE, include=FALSE}
-st_write(data1, "../outputs/3.5-AllFires/SiberiaFires_v2_2001-2020.shp", driver="ESRI Shapefile") 
+st_write(data1, "../outputs/3.5-AllFires/SiberiaFires2001-2020.shp", driver="ESRI Shapefile") 
 ```
 
 

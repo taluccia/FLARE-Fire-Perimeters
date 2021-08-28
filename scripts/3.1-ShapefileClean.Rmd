@@ -11,19 +11,22 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Overview
 
-Using part2-gee-vectors-SingleEco data file, we remove holes, convert from multipoly to polygon, apply negative buffer, and combine into single shapefile.
+Using the output from Google Earth Engine data file, [Part2Vectorize](https://code.earthengine.google.com/?scriptPath=users%2Factalucci%2FFLARE-Fire-Perimeters%3APart1BinaryImage). 
 
-In GEE, vectors were run within  hotspot polygons across 3 ROI
+In GEE, vectors were run within  hotspot polygons across 3 ROIs. Here we clean up the shapefiles and combine into a single shapefile.
 
-1. Union is use to merge overlaping polygons 
+Processing steps include:
+1. Buffer polygons  will all adjacent polygons that overlap the ROI boundaries to be merge in a later step 
+2. Remove any holes within polygons
+3. Combine shapefiles from the three ROIs into a single shapefile
+4. Convert to from sp to sf object for next processing steps
+5. Union to merge overlaping polygons 
   + For example, where a fire spans the imagery boundaries producing multiple polygons, these are merged into a single polygon.
-2. Cast to Polygon
+6. Cast to Polygon
   + This convers from a multipolygon to individual Polygons
-3. Remove Holes
-  + This removes any holes created in polgyons during the GEE vectorize process, or when mergeing polygons
-  + It is important to remove as holes can cause issues during geoprocesses.
-4. **Vectors have too many edges to use in GEE after processing - Need to integrate a smoothing function.**
+  
 
+Everything is process in [Russia Equal area projection](https://gis.stackexchange.com/questions/264093/projection-for-russia-map).
 
 
 # Clear workspace
@@ -54,8 +57,7 @@ library(smoothr)
 # Projections
 
 
-Equal Area projection for russia need for buffering hotspot data
-https://gis.stackexchange.com/questions/264093/projection-for-russia-map
+RussiaEqual Area projection for russia need for buffering hotspot data
 
 +proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
 
@@ -81,7 +83,9 @@ NEPoly1_ee = spTransform(NEPoly1, CRS(ea_russia))
 W_EPoly2_2_ee = spTransform(W_EPoly2_2, CRS(ea_russia))
 ```
 
-# Buffer 
+# Cleaning of Shapefiles
+
+## Buffer 
 Buffer by 1000m (1km). Originally  a buffer was applied in GEE, but to maintain equal area projection we perform the buffer here at the begining to combine adjacent polygons.  
 ```{r}
 E_EPoly2_1_buff = gBuffer(E_EPoly2_1_ee, width = 1000, capStyle="ROUND", joinStyle="ROUND")
@@ -97,7 +101,7 @@ W_EPoly2_2_buff = gBuffer(W_EPoly2_2_ee, width = 1000, capStyle="ROUND", joinSty
 
 
 
-# Remove holes inside polygons
+## Remove holes inside polygons
 
 ```{r}
 E_EPoly2_1_buff_nh = remove.holes(E_EPoly2_1_buff)
@@ -112,7 +116,7 @@ W_EPoly2_2_buff_nh = remove.holes(W_EPoly2_2_buff)
 ```
 
 
-# Combine into one shapefile
+## Combine into one shapefile
 
 ```{r}
 all_shp = rbind(E_EPoly2_1_buff_nh, NEPoly1_buff_nh, W_EPoly2_2_buff_nh)
@@ -121,36 +125,26 @@ all_shp = rbind(E_EPoly2_1_buff_nh, NEPoly1_buff_nh, W_EPoly2_2_buff_nh)
 ```{r}
 all_shp
 ```
-```{r eval=FALSE, include=FALSE}
-plot(all_shp)
-```
 
-# Apply negative buffer
-```{r eval=FALSE, include=FALSE}
-all_shp_nbuf = gBuffer(all_shp, width = -1000, capStyle="ROUND", joinStyle="ROUND")
-```
-
-# Convert from sp to sf
+## Convert from sp to sf
 ```{r}
 all_shp_sf = st_as_sf(all_shp)
 ```
 
-# Union overlapping  Polygons
+## Union overlapping  Polygons
 ```{r}
 all_shp_un = sf::st_union(all_shp_sf)
 ```
 
-# Covert from Multipolygon to Polygon
+## Covert from Multipolygon to Polygon
 ```{r}
 all_shp_cast = st_cast(all_shp_un,"POLYGON")
 ```
 
+# Write Shapefile
 
-
-
-# write Shapefile
 ```{r}
-st_write(all_shp_cast, "../outputs/3.1-GEE-clean-shapefiles-EqualArea/combine1_equalarea_2020.shp", driver="ESRI Shapefile") 
+st_write(all_shp_cast, "../outputs/3.1-Clean/combine1_equalarea_2020.shp", driver="ESRI Shapefile") 
 ```
 
 

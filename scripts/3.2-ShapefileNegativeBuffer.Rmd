@@ -1,5 +1,5 @@
 ---
-title: "test"
+title: "Advanced Cleaning"
 author: "Anna Talucci"
 date: "5/13/2021"
 output: html_document
@@ -10,6 +10,20 @@ output: html_document
 ```{r}
 rm(list=ls()) 
 ```
+
+# Overview
+
+This script applies a negative buffer to counter act the buffer applied in script 3.1 and additional advanced processing steps to clean the polygons to that they are usable in Google Earth Engine (GEE).
+
+Specific steps include:
+1. Remove Holes
+  + This removes any holes created in polygons when merging polygons in the previous script.
+  + It is important to remove as holes because they can cause issues during geoprocessing.
+2. Convert from sp to sf
+3. Apply a smoothing function to reduce the pixelized appearance of the polygons.
+4. Apply a simplify function to reduce the number of vertices in the polygon, which is an issue when using the polygons in GEE.
+
+
 
 # Packages
 
@@ -30,40 +44,24 @@ library(units)
 library(smoothr)
 ```
 
-# Projections
-
-
-Equal Area projection for russia need for buffering hotspot data
-https://gis.stackexchange.com/questions/264093/projection-for-russia-map
-
-+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs 
-
-```{r}
-ea_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
-```
-
 # Read in shapefile
 ```{r}
-vec = readOGR("../data/3.1-GEE-clean-shapefiles-EqualArea/combine1_equalarea_2020.shp", "combine1_equalarea_2020") 
+vec = readOGR("../data/3.1-Clean/combine1_equalarea_2020.shp", "combine1_equalarea_2020") 
 ```
 
-# Reproject in Equal area
+# Advance processing
 
+## Apply negative buffer
 ```{r}
-vec_ea = spTransform(vec, CRS(ea_russia))
+vec_nbuf = gBuffer(vec, width = -1000, capStyle="ROUND", joinStyle="ROUND")
 ```
 
-# Apply negative buffer
-```{r}
-vec_nbuf = gBuffer(vec_ea, width = -1000, capStyle="ROUND", joinStyle="ROUND")
-```
-
-# Convert from sp to sf
+## Convert from sp to sf
 ```{r}
 vec_sf = st_as_sf(vec_nbuf)
 ```
 
-# Apply smooth function
+## Apply smooth function
 
 See [Smooth and Tidy Spatial Features](https://cran.r-project.org/web/packages/smoothr/vignettes/smoothr.html)
 
@@ -71,16 +69,16 @@ See [Smooth and Tidy Spatial Features](https://cran.r-project.org/web/packages/s
 vec_smooth <- smooth(vec_sf, method = "ksmooth", smoothness = 2)
 ```
 
-# Apply Simplify function
+## Apply Simplify function
 
 Simplify with [mapshaper](https://cran.r-project.org/web/packages/rmapshaper/vignettes/rmapshaper.html).
 
-keep_shapes = TRUE, explode = TRUE)
+
 ```{r}
 vec_simp = ms_simplify(vec_smooth, keep_shapes = FALSE, explode = TRUE)
 ```
 
-
+# Write Shapefile
 ```{r}
-st_write(vec_simp, "../outputs/3.2-GEE-clean-shapefiles-EqualArea/nbuf_equalarea_2020.shp", driver="ESRI Shapefile") 
+st_write(vec_simp, "../outputs/3.2-AdvanceClean/nbuf_equalarea_2020.shp", driver="ESRI Shapefile") 
 ```
