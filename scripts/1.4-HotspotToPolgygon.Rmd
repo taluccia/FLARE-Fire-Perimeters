@@ -6,23 +6,21 @@ output: html_document
 ---
 
 # Overview
-Convert Hotspot point data from MODIS to polygons. The purpose of this is to limit the extent of the vector function in GEE to delinieate fire perimeters. This script utilizes data process in script 1.2
-
+Convert Hotspot point data from MODIS to polygons. The purpose of this is to limit the extent of the vector function in GEE to delineate fire perimeters. This script utilizes data process in script 1.3. The script runs a single year at a time. Use find replace to change year and then run to process next year. Special code for 2003, 2019,and 2020, due to large data set and computational limits. 
 
 Data acquired from [FIRMS](https://firms.modaps.eosdis.nasa.gov/download/create.php)
 
 Description of [Modis data](https://earthdata.nasa.gov/earth-observation-data/near-real-time/firms).
 
-
-MODIS  available 2001-present
+MODIS available 2001-present.
 
 Take all annual hotspot data and make polygons 2001-2020. We did not end up combining MODIS/VIIRS data from 2012-2020, because the data set became to large to process.
  
 Special Notes:
 
 1. Processing hotspot point data to polygon data
-2. 2003 is process separately due to a single point on the 180 degree latitude that causes issues when switching from equal area projection to WGS 84 Mecator.
-3. 2019 & 2020 are process separately---Because these data sets area large spatial data sets, we will set this up to run annual data across each bounding box.
+2. Everything process to Russia Equal Area Projection
+3. 2003, 2019 & 2020 are processed separately across 3 ROIs because of computational limits. 
 
 # Clear workspace
 
@@ -57,7 +55,8 @@ ee_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +e
 ```
 
 # Data
-##  Hotspot Data (MODIS)**(change year on data and saving at end)**
+##  Hotspot Data (MODIS)
+**Change year on data with find and replace**
 
 ```{r}
 hs = readOGR("../data/M6-march-october/M6_mar-oct_2003.shp", "M6_mar-oct_2003") 
@@ -70,7 +69,7 @@ eco_ee = readOGR("../data/ecozones/eco_SinglePoly_ee.shp", "eco_SinglePoly_ee")
 ```
 
 ## Three ROI to split large data
-GEE ROI (Regions of interest) to split the processing into three spatial extents including the NE Poly 1 that covers all of northeaster siberia, Eastern portion of E Poly 2 and the Western portion of E Poly 2 that cover everything west of the northeastern region.
+GEE ROI (Regions of interest) to split the processing into three spatial extents including the NE Poly 1 that covers all of northeaster Siberia, Eastern portion of E Poly 2 and the Western portion of E Poly 2 that cover everything west of the northeastern region.
 
 ```{r}
 eco_nepoly1_ee = readOGR("../data/ecozones/eco_NEPoly1_ee.shp", "eco_NEPoly1_ee") 
@@ -85,7 +84,7 @@ eco_W_EPoly2_2_ee =  readOGR("../data/ecozones/eco_W_EPoly2_2_ee.shp", "eco_W_EP
 ```
 
 
-# Reproject to equal area russia
+# Reproject to equal area Russia
 ```{r}
 hs_ee = spTransform(hs, CRS(ee_russia))
 ```
@@ -98,7 +97,7 @@ This code uses a single polygon that covers all eight ecozones
 1. Select points within ecozone region
 2. Buffer points by 3000 m overlapping polygons join
 3. Remove any holes in the polygons
-5. Conver to sf object
+5. Convert to sf object
 6. Write to shapefile
 
 ## point to Polygon
@@ -156,7 +155,7 @@ eco3_hs_EA_sf = st_as_sf(eco3_hs_3k_nh)
 ## Combine Hotspot poly into one file for 2003, 2019 & 2020
 1. Convert to sf object
 2. `rbind` to combine into single file
-3. Union to merge overlaping polygons
+3. Union to merge overlapping polygons
 4. Cast as individual polygons
 5. remove any holes that occur from processing
 ```{r}
