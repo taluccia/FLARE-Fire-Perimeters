@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # Overview
+The purpose of this script is to create three Regions of Interest across the eight ecozone study area. The ROIs are used to contain processing within computational limits. All outputs are in equal area projection for Russia.
+
 This code uses the [WWF Ecozones shapefile](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world). We subset the ecozones for NE Siberia to include the following:
 
 1. Bering tundra
@@ -22,11 +24,9 @@ This code uses the [WWF Ecozones shapefile](https://www.worldwildlife.org/public
 7. Taimyr-central Siberia tundra 
 8. Trans-Baikal Bald Mountain Tundra
 
-While we will need the attribute field for the final fire perimeters, they are not neccessary for the polygons we use in GEE.
+While we will need the attribute field for the final fire perimeters, they are not neccessary for the polygons we use in GEE as ROIs.
 
-
-
-# Library
+# Packages
 
 ```{r}
 library(dplyr)
@@ -45,13 +45,7 @@ library(foreign) # deals with dbf files
 library(spatialEco)
 ```
 
-# Projections
-
-WGS 84 need for gee
-```{r}
-wgs_proj =  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs "
-
-```
+# Define Projections
 
 Equal Area projection for russia need for buffering hotspot data
 https://gis.stackexchange.com/questions/264093/projection-for-russia-map
@@ -62,7 +56,7 @@ https://gis.stackexchange.com/questions/264093/projection-for-russia-map
 ee_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs "
 ```
 
-# Data
+# Read in Data
 st_write(ne_subset_ee, "../outputs/ecozones/ne_siberia_ecozones9_ee.shp", driver="ESRI Shapefile") 
 
 ```{r}
@@ -80,14 +74,14 @@ ru1 = st_read("../data/russia/RUS_adm1.shp", "RUS_adm1")
 ```{r}
 head(ecozone)
 ```
-# Equal Area
+# Reproject to Equal Area
 ```{r}
 ru_ee = st_transform(ru, crs=ee_russia)
 ru1_ee = st_transform(ru1, crs=ee_russia)
 ```
 
 
-# Plot
+# Plot Russia and Ecozones
 ```{r}
 plot(ru_ee$geometry, col = '#ff333388'); #x
 plot(ecozone$geometry, add=TRUE, col='#33ff3388')#y
@@ -122,9 +116,10 @@ st_write(eco_buf_110km_un_poly, "../outputs/ecozones/eco_SinglePoly_ee.shp", dri
 ```
 
 
-# Split into 2 groups for large data
+# Split ecozones into 3 ROI 
+We split the the ecozones into three ROI (Regions of Interest) to process large data within the computational limits.
 
-## Group 1 Far Northeastern Ecozones 
+## First ROI Northeastern Ecozones 
 ```{r}
 group1 = ecozone %>% 
   filter(eco_code %in% c("CKMT", "NST", "NSCT", "CPT", "BT"))
@@ -149,11 +144,7 @@ plot(grp1_buf_1km_un_poly, add=TRUE, col='#33ff3388')#y
 title("russia: red,ecozone: green")
 ```
 
-```{r eval=FALSE, include=FALSE}
-st_write(grp1_buf_1km_un_poly, "../outputs/ecozones/eco_NEPoly1_ee.shp", driver="ESRI Shapefile") 
-```
-
-## Group 2  Eastern Siberia Ecozones
+## Second and Third ROI for Eastern Siberia Ecozones
 ```{r}
 group2 = ecozone %>% 
   filter(eco_code %in% c("EST", "TBBMT", "TCST", "SSFS"))
@@ -181,11 +172,8 @@ plot(group2, add=TRUE)
 title("russia: red,ecozone: green")
 ```
 
-```{r eval=FALSE, include=FALSE}
-st_write(grp2_buf_1km, "../outputs/ecozones/eco_EPoly2_ee.shp", driver="ESRI Shapefile") 
-```
 
-### Split Eastern Siberia into 2 polygons by Russian Admin zones
+### Split in 2
 
 #### Filter  Russian  admin
 
@@ -218,11 +206,9 @@ ru_admin2_poly <- sf::st_cast(ru_admin2_un, "POLYGON")
 ggplot(ru_admin2_poly) + geom_sf()
 ```
 
-##### Crop Group 2 ecozones by Russian  Admin zones
 
-###### Eastern portion
 
-###### Crop
+#### Crop Eastern portion
 ```{r}
 epoly2_1 = st_crop(grp2_buf_1km, ru_admin2_poly)
 
@@ -253,8 +239,7 @@ ggplot(epoly2_1_buf_1km) + geom_sf()
 st_write(epoly2_1_buf_1km, "../outputs/ecozones/eco_E_EPoly2_1_ee.shp", driver="ESRI Shapefile") 
 ```
 
-#####  Wester Portion
-###### Crop
+####  Crop Wester Portion
 ```{r}
 epoly2_2 = st_difference(grp2_buf_1km, epoly2_1)
 
