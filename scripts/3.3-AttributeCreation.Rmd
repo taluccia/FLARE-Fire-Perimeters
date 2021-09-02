@@ -291,61 +291,9 @@ data7 = data6 %>%
 data7
 ```
 
-## Yedoma attributes
-st_make_valid(poly)
-
-### Data 8 
-
-```{r}
-data8 = st_join(data7, st_make_valid(yedoma_ea), largest=TRUE) 
-```
-
-```{r}
-data8
-```
-
-```{r}
-str(data8)
-```
-
-### Data 9
-Convert NA
-
-```{r}
-data9 = data8 %>% 
-  dplyr::select(ID_obj:Fire_ID, yedoma, geometry) %>%
-  mutate_at(vars(yedoma), funs(factor(data8$yedoma, exclude = NULL, levels = c("yes", NA), labels = c("yes", "no")))) 
-
-```
-
-## Permafrost Attributes
-
-### Data 10
-```{r}
-data10 = st_join(data9, st_make_valid(perma_ea), largest=TRUE) 
-```
-
-```{r}
-data10
-```
-
-### Data 11
-```{r}
-data11 = data10 %>% dplyr::select(ID_obj:yedoma, COMBO:LANDFORM)
-
-data11
-  
-```
-
-
-```{r}
-data11 %>% filter(ID_obj ==1451)
-
-```
-
 # Write to shapefile
 ```{r}
-st_write(data11, "../outputs/3.3-Attribute/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
+st_write(data7, "../outputs/3.3-Attribute/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
 ```
 
 
