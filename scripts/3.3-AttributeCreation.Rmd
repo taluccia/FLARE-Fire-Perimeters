@@ -78,29 +78,6 @@ Cropped ecozones to arctic circle for arctic designation.
 eco_arctic = st_read("../data/ecozones/ecozone_arctic_crop_ee.shp", "ecozone_arctic_crop_ee") 
 ```
 
-## Permafrost
-```{r}
-permafrost = st_read("../data/permafrost/permaice.shp", "permaice") 
-```
-
-## Yedoma
-```{r}
-yedoma1 = st_read("../data/IRYP_v1_shapefiles/QG1000k_yedoma_russia.shp", "QG1000k_yedoma_russia") 
-yedoma2 = st_read("../data/IRYP_v1_shapefiles/QG2500k_yedoma_russia.shp", "QG2500k_yedoma_russia") 
-yedoma3 = st_read("../data/IRYP_v1_shapefiles/SG500k_yedoma_russia.shp", "SG500k_yedoma_russia") 
-```
-
-```{r}
-head(yedoma1)
-head(yedoma2)
-head(yedoma3)
-```
-
-
-```{r}
-yedoma = dplyr::bind_rows(yedoma1, yedoma2, yedoma3) %>% mutate(yedoma="yes")
-
-```
 
 # Reprojection to Equal Area
 
@@ -109,8 +86,6 @@ fires_ea = st_transform(fires, ea_ru)
 hotspots_ea = st_transform(hotspots, ea_ru)
 ecozones_ea = st_transform(ecozones, ea_ru)
 eco_arctic_ea = st_transform(eco_arctic, ea_ru)
-perma_ea = st_transform(permafrost, ea_ru)
-yedoma_ea = st_transform(yedoma, ea_ru)
 ```
 
 
@@ -289,7 +264,7 @@ data7
 ```
 
 # Write to shapefile
-```{r eval=FALSE, include=FALSE}
+```{r}
 st_write(data7, "../outputs/3.3-Attribute/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
 ```
 

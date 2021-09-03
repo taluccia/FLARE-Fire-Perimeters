@@ -28,10 +28,7 @@ library(rgdal) # geospatial data
 library(raster)
 library(rgeos) # GIS Geometry
 library(foreign) # deals with dbf files
-library(dplyr)
-library(tidyr)
-library(spatialEco)
-library(ggplot2)
+library(tidyverse)
 library(lubridate)
 ```
 
@@ -87,19 +84,14 @@ acq_day    **Drop**
 mx_cq_d = MaxDate
 brn_dys = TotDays             
  Fire_ID = FireID
- yedoma = Yedoma 
- COMBO = PermCom
- RELICT=  **Drop** 
- EXTENT = PermExt
- CONTENT = PermCon
- LANDFOR = PermLan
+ 
 
 # Rename Columns
 rename(data,  new_name = )
 
 ```{r}
 fires_rename = fires %>% 
-  dplyr::select(ID_obj:fire_yr, ECO_NAM:eco_bim, are_km2:eco_cod, locatin:mn_cq_d, mx_cq_d:COMBO, EXTENT:LANDFOR) %>% 
+  dplyr::select(ID_obj:fire_yr, ECO_NAM:eco_bim, are_km2:eco_cod, locatin:mn_cq_d, mx_cq_d:Fire_ID) %>% 
   rename(IDobj = ID_obj, 
          FID = rmpshpr, 
          SIZEm2 = brnd_r_m, 

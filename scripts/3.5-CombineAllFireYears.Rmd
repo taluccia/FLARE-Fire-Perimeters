@@ -33,9 +33,7 @@ library(rgdal) # geospatial data
 library(raster)
 library(rgeos) # GIS Geometry
 library(foreign) # deals with dbf files
-library(dplyr)
-library(tidyr)
-library(ggplot2)
+library(tidyverse)
 library(lubridate)
 ```
 
