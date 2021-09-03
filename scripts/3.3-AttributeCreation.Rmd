@@ -36,10 +36,7 @@ library(rgdal) # geospatial data
 library(raster)
 library(rgeos) # GIS Geometry
 library(foreign) # deals with dbf files
-library(dplyr)
-library(tidyr)
-library(spatialEco)
-library(ggplot2)
+library(tidyverse)
 library(lubridate)
 library(forcats)
 ```
@@ -292,7 +289,7 @@ data7
 ```
 
 # Write to shapefile
-```{r}
+```{r eval=FALSE, include=FALSE}
 st_write(data7, "../outputs/3.3-Attribute/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
 ```
 
