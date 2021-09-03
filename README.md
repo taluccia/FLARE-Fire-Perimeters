@@ -1,9 +1,8 @@
 # FLARE-Fire-Perimeters
 
 ## Overview
-This repository contains scripts for processing spatial data to develop a fire perimeter database for 8 ecozones across Northeastern Siberia.
+This repository contains scripts for processing spatial data to develop a fire perimeter database for 8 ecozones across Northeastern Siberia. All reomte ssensing Landsat imagery processing occured in Googel Earth Engine.
 
-The paper can be found here
 
 ## Scripts
 
@@ -22,9 +21,32 @@ Develop fire perimeters from Landsat data
 3.5-CombineAllFires
 
 
-## Fire terminology
+## Final Attributes
 
-[Fire Effects Information System Glossary](https://www.fs.fed.us/database/feis/glossary2.html#1)
+Attribute	    |         Description       
+------------- | ---------------------------
+IDobj	        | Numberis ID	
+FID	          | Numeric ID	
+SIZEm2	      | Area of fire perimeter measured in squared meters	
+SIZEha	      | Area of fire perimeter measured in hectares	
+FireYr	      | Fire year	
+EcoName	      | Ecozone name	(Olson et al. 2001)
+EcoRlm	      | Code for Biogeographic realm PA refers to Palearctic	(Olson et al. 2001)
+EcoBiom	      | This a a numeric ID 6 for taiga and 11 for tundra	(Olson et al. 2001)
+EcoKm2	      | The area of the ecozone in kilometers  squared	(Olson et al. 2001)
+EcoCode	      | Unique code associated with each ecozone.	
+ArcSub	      | Location designation of Arctic or Subarctic	
+MinDay	      | The minimum Julian associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+MaxDay	      | The maximum Julian associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+AvgDay	      | The mean Julian associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+MedDay	      | The median Julian associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+MinConf	      | The minimum confidence value associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+MaxConf	      | The maximum confidence value associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+AvgConf	      | The mean confidence value associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+MedConf	      | The median confidence value associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+MinDate	      | The minimum calendar date associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+MaxDate	      | The maximum calendar date associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+
 
 ## References
 **Hotspot point Shapefile**
@@ -34,12 +56,3 @@ Develop fire perimeters from Landsat data
 Olson, D. M., Dinerstein, E., Wikramanayake, E. D., Burgess, N. D., Powell, G. V. N., Underwood, E. C., D'Amico, J. A., Itoua, I., Strand, H. E., Morrison, J. C., Loucks, C. J., Allnutt, T. F., Ricketts, T. H., Kura, Y., Lamoreux, J. F., Wettengel, W. W., Hedao, P., Kassem, K. R. 2001. Terrestrial ecoregions of the world: a new map of life on Earth. Bioscience 51(11):933-938.
 [Download location ](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world)
 
-**Yedoma Shapefile**
-Strauss, Jens; Laboor, Sebastian; Fedorov, Alexander N; Fortier, Daniel; Froese, Duane G; Fuchs, Matthias; Grosse, Guido; Günther, Frank; Harden, Jennifer W; Hugelius, Gustaf; Kanevskiy, Mikhail Z; Kholodov, Alexander L; Kunitsky, Victor V; Kraev, Gleb; Lapointe-Elmrabti, Lyna; Lozhkin, Anatoly V; Rivkina, Elizaveta; Robinson, Joel; Schirrmeister, Lutz; Shmelev, Denis; Shur, Yuri; Siegert, Christine; Spektor, Valentin; Ulrich, Mathias; Vartanyan, Sergey L; Veremeeva, Alexandra; Walter Anthony, Katey M; Zimov, Sergey A (2016): Database of Ice-Rich Yedoma Permafrost (IRYP), link to ESRI shapefiles. PANGAEA, https://doi.org/10.1594/PANGAEA.861732,
-
-[Download location](https://doi.pangaea.de/10.1594/PANGAEA.861732)
-
-**Permafrost Shapefile**
-Brown, J., O. Ferrians, J. A. Heginbottom, and E. Melnikov. 2001. Circum-Arctic Map of Permafrost and Ground-Ice Conditions, Version 2. [Indicate subset used]. Boulder, Colorado USA. NSIDC: National Snow and Ice Data Center. doi: https://doi.org/10.7265/skbg-kf16. [Date Accessed].
-
-[permafrost shapefile details](https://nsidc.org/data/GGD318/versions/2/print)
