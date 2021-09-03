@@ -37,7 +37,7 @@ rsconnect/
 .Rproj.user
 
 # For Mac users computer specific files
-# .DS_Store
+**/.DS_Store
 
 # exclude specific folders from push to github
 figures/*
