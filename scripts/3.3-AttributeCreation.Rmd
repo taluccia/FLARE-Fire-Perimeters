@@ -253,7 +253,7 @@ An add fire length in days
 ```{r}
 data7 = data6 %>%
   separate(min_acq_date, c("acq_year","acq_month", "acq_day"), sep = "-", remove=FALSE) %>%
-  mutate(burn_days = (max_julian_date - min_julian_date)) %>%
+  mutate(burn_days = (max_julian_date - min_julian_date) + 1) %>%
   mutate(Fire_ID = paste("RU_", fire_yr,"_", eco_code, "_", acq_year, acq_month, acq_day, sep = "")) %>%
   dplyr::select(ID_obj:max_acq_date, burn_days:Fire_ID, geometry)
 

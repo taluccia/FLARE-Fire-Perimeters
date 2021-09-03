@@ -46,6 +46,7 @@ AvgConf	      | The mean confidence value associated with the fire based on MODI
 MedConf	      | The median confidence value associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
 MinDate	      | The minimum calendar date associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
 MaxDate	      | The maximum calendar date associated with the fire based on MODIS point thermal annomalies (i.e., hotspots)	
+TotDays       | The number of days the fire was actively burning based on MODIS hotspot data, calculated from max_julian_date - min_julian_date + 1; +1 allows for accounting  of the start day.
 
 
 ## References
