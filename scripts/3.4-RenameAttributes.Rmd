@@ -122,12 +122,7 @@ fires_rename = fires %>%
          MinDate = mn_cq_d, 
          MaxDate = mx_cq_d, 
          TotDays = brn_dys, 
-         FireId = Fire_ID,  
-         Yedoma = yedoma,
-         PermCom = COMBO,
-         PermExt =  EXTENT,
-         PermCon = CONTENT,
-         PermLan = LANDFOR)
+         FireId = Fire_ID)
 
 ```
 
