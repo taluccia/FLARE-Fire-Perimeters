@@ -87,7 +87,7 @@ ee_russia = "+proj=aea +lat_1=50 +lat_2=70 +lat_0=56 +lon_0=100 +x_0=0 +y_0=0 +e
 6. Taimyr-Central Siberian tundra (TCST)
 7. East Siberian taiga (EST)
 8. Trans-Baikal Bald Mountain tundra (TBBMT)
-9. South Siberian forest steppe (SSFT)
+9. South Siberian forest steppe (SSFT) (will delete at the end)
 ```{r}
 target = c("Cherskii-Kolyma mountain tundra", "Northeast Siberian coastal tundra","Chukchi Peninsula tundra", "Northeast Siberian taiga", "Bering tundra", "Taimyr-Central Siberian tundra", "East Siberian taiga", "Trans-Baikal Bald Mountain tundra", "South Siberian forest steppe")
 ```
@@ -105,8 +105,8 @@ ne_subset = ecozone %>%
               ifelse(ECO_NAME %in% "Bering tundra", "BT",
                 ifelse(ECO_NAME %in% "Taimyr-Central Siberian tundra", "TCST",
                   ifelse(ECO_NAME %in% "Trans-Baikal Bald Mountain tundra", "TBBMT",
-                         ifelse(ECO_NAME %in% "East Siberian taiga", "EST",
-            ifelse(ECO_NAME %in%  "South Siberian forest steppe", "SSFS", "NA"))))))))))
+                     ifelse(ECO_NAME %in% "East Siberian taiga", "EST", 
+                       ifelse(ECO_NAME %in%  "South Siberian forest steppe", "SSFS", "NA"))))))))))
 ```
 
 
