@@ -35,7 +35,7 @@ library(lubridate)
 
 # Data Shapefile
 ```{r}
-fires = st_read("../data/3.3-Attribute/SiberiaFires_v2_2001.shp", "SiberiaFires_v2_2001") 
+fires = st_read("../data/3.3-Attribute/SiberiaFires_v2_2020.shp", "SiberiaFires_v2_2020") 
 ```
 
 ```{r}
@@ -125,6 +125,6 @@ fires_rename %>% filter(IDobj ==1451)
 
 # Write to shapefile
 ```{r}
-st_write(fires_rename, "../outputs/3.4-Vectors/SiberiaFires_v2_2001.shp", driver="ESRI Shapefile") 
+st_write(fires_rename, "../outputs/3.4-Vectors/SiberiaFires_v2_2020.shp", driver="ESRI Shapefile") 
 ```
 
