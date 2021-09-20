@@ -108,16 +108,21 @@ all_fires
 st_write(all_fires, "../outputs/3.5-AllFires/all_fires_2001-2020.shp", driver="ESRI Shapefile") 
 ```
 
-# Remove wierd triangles
+# Remove triangle and SSFS
 ```{r}
-remove_large_triangles = all_fires %>% filter(!(FireYr == "2014" & IDobj=="2147"))
+all_fires1 = all_fires %>% 
+  filter(!(FireYr == "2014" & IDobj=="2147")) %>%
+  filter((EcoCode!="SSFS"))
 ```
 
+
+
 ```{r}
-remove_large_triangles
+all_fires
 ```
+
 # Write to shapefile
 ```{r eval=FALSE, include=FALSE}
-st_write(remove_large_triangles, "../outputs/3.5-AllFires/SiberiaFires2001-2020.shp", driver="ESRI Shapefile") 
+st_write(all_fires1, "../outputs/3.5-AllFires/SiberiaFires2001-2020.shp", driver="ESRI Shapefile") 
 ```
 
