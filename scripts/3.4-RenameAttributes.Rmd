@@ -54,8 +54,8 @@ head(fires)
 # Column Names
 ID_obj =IDobj
 rmpshpr = FID
-brnd_r_m = SIZEm2
-brnd_r_h =SIZEha
+brnd_r_m = SizeM2
+brnd_r_h =SizeHa
 fire_yr = FireYr
 ec_bjID **Drop** 
 eco_are **Drop**       
@@ -83,7 +83,7 @@ acq_mnt **Drop**
 acq_day    **Drop** 
 mx_cq_d = MaxDate
 brn_dys = TotDays             
- Fire_ID = FireID
+Fire_ID = FireID
  
 
 # Rename Columns
@@ -94,8 +94,8 @@ fires_rename = fires %>%
   dplyr::select(ID_obj:fire_yr, ECO_NAM:eco_bim, are_km2:eco_cod, locatin:mn_cq_d, mx_cq_d:Fire_ID) %>% 
   rename(IDobj = ID_obj, 
          FID = rmpshpr, 
-         SIZEm2 = brnd_r_m, 
-         SIZEha = brnd_r_h, 
+         SizeM2 = brnd_r_m, 
+         SizeHa = brnd_r_h, 
          FireYr = fire_yr, 
          EcoName = ECO_NAM, 
          EcoRlm = eco_rlm, 
@@ -119,7 +119,7 @@ fires_rename = fires %>%
 ```
 
 ```{r}
-fires_rename %>% filter(IDobj ==1451)
+fires_rename 
 
 ```
 

@@ -99,26 +99,31 @@ tail(all_fires)
 all_fires
 ```
 
-```{r}
-all_fires
-```
+
 
 # write to check data
 ```{r eval=FALSE, include=FALSE}
 st_write(all_fires, "../outputs/3.5-AllFires/all_fires_2001-2020.shp", driver="ESRI Shapefile") 
 ```
 
-# Remove triangle and SSFS
+# Final Cleaning
+
+- Remove polygon that drew as large triangle
+- Remove SSFS because it is not in the Boreal or Tundra Biome
+- Remove fire smaller then 200 ha following Canadian large wildfire database
+- Remove any fires with mean confidence of zero based on Modis hotspots
 ```{r}
 all_fires1 = all_fires %>% 
   filter(!(FireYr == "2014" & IDobj=="2147")) %>%
-  filter((EcoCode!="SSFS"))
+  filter((EcoCode!="SSFS")) %>% 
+  filter(SizeHa >= 200) %>%
+  filter(AvgConf > 0) 
 ```
 
 
 
 ```{r}
-all_fires
+all_fires1
 ```
 
 # Write to shapefile
