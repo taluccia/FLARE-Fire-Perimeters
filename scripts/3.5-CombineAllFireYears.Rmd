@@ -35,6 +35,7 @@ library(rgeos) # GIS Geometry
 library(foreign) # deals with dbf files
 library(tidyverse)
 library(lubridate)
+library(ids)
 ```
 
 
@@ -126,8 +127,37 @@ all_fires1 = all_fires %>%
 all_fires1
 ```
 
+
+
+# Check unique IDs
+```{r}
+all_fires1
+```
+22091
+```{r}
+n_distinct(all_fires1$FireId)
+n_distinct(all_fires1$FID)
+n_distinct(all_fires1$IDobj)
+```
+
+# Add Unique ID
+
+```{r}
+all_fires2 = all_fires1 %>% 
+  mutate(UniqueId = random_id(n= 22091, bytes = 4)) %>%
+  dplyr::select(UniqueId, IDobj:geometry)
+```
+
+```{r}
+head(all_fires2)
+```
+
+```{r}
+n_distinct(all_fires2$UniqueId)
+```
+
 # Write to shapefile
 ```{r eval=FALSE, include=FALSE}
-st_write(all_fires1, "../outputs/3.5-AllFires/SiberiaFires2001-2020.shp", driver="ESRI Shapefile") 
+st_write(all_fires2, "../outputs/3.5-AllFires/SiberiaFires2001-2020.shp", driver="ESRI Shapefile") 
 ```
 
