@@ -3,6 +3,14 @@
 ## Overview
 This repository contains scripts for processing spatial data to develop a fire perimeter database for 8 ecozones across Northeastern Siberia. All remote sensing Landsat imagery processing occurred in Google Earth Engine.
 
+The most up to date versions of the shapefile package is [avaialble here](https://doi.org/10.18739/A2GB1XJ4M)
+
+Please use the following citation for the data
+
+| Anna Talucci, Michael Loranty, and Heather Alexander. 2021. "Fire perimeters
+|   for eastern Siberia taiga and tundra from 2001-2020." Arctic Data
+|   Center. doi:10.18739/A2GB1XJ4M.
+
 
 ## Scripts
 
@@ -25,6 +33,7 @@ Develop fire perimeters from Landsat data
 
 Attribute	    |         Description       
 ------------- | ---------------------------
+UniqueId      | 8-byte alphanumeric identifier to account for the duplicate IDs found in IDobj, FireID, and FID as a result of the data having been processed on individual years, and then compiled into the 20-year period (which resulted in duplicates).
 IDobj	        | Numeric ID	
 FID	          | Numeric ID	
 SIZEm2	      | Area of fire perimeter measured in squared meters	
