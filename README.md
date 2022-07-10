@@ -7,8 +7,7 @@ The most up to date versions of the shapefile package is [avaialble here](https:
 
 Please use the following citation for the data
 
-| Anna Talucci, Michael Loranty, and Heather Alexander. 2021. "Fire perimeters for eastern 
-| Siberia taiga and tundra from 2001-2020." Arctic Data Center. doi:10.18739/A2GB1XJ4M.
+Anna Talucci, Michael Loranty, and Heather Alexander. 2021. "Fire perimeters for eastern Siberia taiga and tundra from 2001-2020." Arctic Data Center. doi:10.18739/A2GB1XJ4M.
 
 
 ## Scripts
@@ -55,6 +54,10 @@ MedConf	      | The median confidence value associated with the fire based on MO
 MinDate	      | The minimum calendar date associated with the fire based on MODIS point thermal anomalies (i.e., hotspots)	
 MaxDate	      | The maximum calendar date associated with the fire based on MODIS point thermal anomalies (i.e., hotspots)	
 TotDays       | The number of days the fire was actively burning based on MODIS hotspot data, calculated from max_julian_date - min_julian_date + 1; +1 allows for accounting  of the start day.
+
+## Projection
+
+[Equal Area projection for Russia](https://gis.stackexchange.com/questions/264093/projection-for-russia-map)
 
 
 ## References
