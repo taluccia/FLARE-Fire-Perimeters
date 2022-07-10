@@ -6,11 +6,10 @@ This repository contains scripts for processing spatial data to develop a fire p
 The most up to date versions of the shapefile package is [avaialble here](https://doi.org/10.18739/A2GB1XJ4M)
 
 Please use the following citation for the data
-\setlength{\leftskip}{0.5cm}
-Anna Talucci, Michael Loranty, and Heather Alexander. 2021. "Fire perimeters
-for eastern Siberia taiga and tundra from 2001-2020." Arctic Data
-Center. doi:10.18739/A2GB1XJ4M.
-\setlength{\leftskip}{0pt}
+
+| Anna Talucci, Michael Loranty, and Heather Alexander. 2021. "Fire perimeters for eastern 
+| Siberia taiga and tundra from 2001-2020." Arctic Data Center. doi:10.18739/A2GB1XJ4M.
+
 
 ## Scripts
 
